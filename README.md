@@ -4,12 +4,72 @@ Medo is an intelligent medical assistant powered by AI that provides medical inf
 
 ## Features
 
-- 🩺 AI-powered medical question answering
-- 🗣️ Speech-to-text input in multiple languages
-- 🔊 Text-to-speech responses
-- 🌍 Multi-language support (English, Hindi, Spanish, French, Telugu, Korean)
-- 📋 Prescription parsing and calendar integration
-- 🔍 Web search integration for up-to-date medical information
+### 🩺 AI-Powered Medical Assistant
+- **Intelligent Responses**: Powered by Ollama's Llama 3.2 model for accurate medical information
+- **Context-Aware**: Understands medical terminology and provides relevant, safe advice
+- **Safety First**: Always recommends consulting healthcare professionals for serious concerns
+- **Real-time Processing**: Fast response times with inference time tracking
+
+### 🗣️ Advanced Speech-to-Text
+- **Multi-Language Recognition**: Supports voice input in 6 languages
+- **High Accuracy**: Powered by Google Cloud Speech-to-Text API
+- **Real-time Transcription**: Instant conversion of speech to text
+- **Audio Format Support**: Handles various audio formats and encodings
+
+### 🔊 Text-to-Speech Responses
+- **Natural Voice Synthesis**: High-quality audio responses using Google Cloud Text-to-Speech
+- **Language-Specific Voices**: Native voice support for each supported language
+- **Playback Controls**: Play/pause audio responses with toggle functionality
+- **Audio Quality**: MP3 format for optimal quality and compatibility
+
+### 🌍 Comprehensive Multi-Language Support
+- **6 Languages Supported**:
+  - English (en-US)
+  - Hindi (hi-IN)
+  - Spanish (es-ES)
+  - French (fr-FR)
+  - Telugu (te-IN)
+  - Korean (ko-KR)
+- **Automatic Translation**: Seamless translation between languages using Google Translate
+- **User Preferences**: Save language preferences per user account
+- **Consistent Experience**: Full UI and response translation
+
+### 📋 Smart Prescription Management
+- **AI-Powered Parsing**: Extract medication details from prescription text files
+- **Calendar Integration**: Automatic medication reminders in Google Calendar
+- **Structured Data**: Parse dosage, frequency, timing, and diagnosis information
+- **File Upload**: Simple .txt file upload interface
+- **Preview & Validation**: Review parsed data before calendar integration
+
+### 🔍 Intelligent Web Search Integration
+- **Real-time Medical Information**: Access up-to-date medical data via Firecrawl API
+- **Source Attribution**: Transparent source citations for all web-based information
+- **Smart Search Decisions**: AI determines when external search is needed
+- **Reliable Sources**: Curated medical information from trusted websites
+
+### 🔐 User Authentication & Security
+- **Secure Login System**: Password-based authentication with encryption
+- **Session Management**: Secure session handling with Flask sessions
+- **User Registration**: Simple account creation with validation
+- **Data Protection**: Sensitive credentials excluded from version control
+
+### 💾 Data Management
+- **User Profiles**: Persistent user data storage in Excel format
+- **Language Preferences**: Individual language settings per user
+- **Chat History**: Real-time chat interface with message history
+- **File Handling**: Secure file upload and processing
+
+### 🎨 Modern User Interface
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Intuitive Chat Interface**: WhatsApp-style messaging experience
+- **Visual Feedback**: Loading indicators, status messages, and error handling
+- **Accessibility**: Screen reader friendly with proper alt texts and labels
+
+### ⚡ Performance & Reliability
+- **Fast Response Times**: Optimized API calls and processing
+- **Error Handling**: Comprehensive error management and user feedback
+- **Scalable Architecture**: Flask-based backend ready for deployment
+- **Debug Information**: Optional debug mode for development and troubleshooting
 
 ## Screenshots
 
