@@ -1,79 +1,77 @@
-# Medo - Medical Assistant Chatbot
+# Medo - AI Medical Assistant
 
-## Description
-
-Medo is a Flask-based web application designed to act as a helpful medical assistant. It provides a chat interface for users to ask medical questions and includes functionality to parse uploaded text-based prescriptions and automatically add medication reminders to the user's Google Calendar. The application leverages Large Language Models (LLMs) via Ollama for natural language understanding and response generation, integrates with Google Translate for multilingual support, and uses the Google Calendar API for scheduling.
+Medo is an intelligent medical assistant powered by AI that provides medical information, supports multiple languages, and includes speech-to-text and text-to-speech capabilities.
 
 ## Features
 
-*   **User Authentication:** Secure user registration and login system.
-*   **Chat Interface:** Real-time chat with the Medo assistant.
-*   **LLM-Powered Responses:** Utilizes Ollama (Llama 3.2) to answer medical queries.
-*   **Web Search Integration:** Uses Firecrawl API to fetch relevant, up-to-date information from the web when necessary to answer queries accurately.
-*   **Prescription Parsing:** Upload `.txt` prescription files for automatic parsing using an LLM.
-*   **Google Calendar Integration:** Automatically creates medication reminder events in the user's primary Google Calendar based on parsed prescription timings (supports specific times, keywords like "morning", "lunch", "night", and instructions like "before/after food").
-*   **Multilingual Support:** Translates user input to English for processing and translates responses back to the user's preferred language (supports English, Hindi, Spanish, French via Google Translate API).
-*   **Language Settings:** Users can change their preferred language via a settings page.
+- 🩺 AI-powered medical question answering
+- 🗣️ Speech-to-text input in multiple languages
+- 🔊 Text-to-speech responses
+- 🌍 Multi-language support (English, Hindi, Spanish, French, Telugu, Korean)
+- 📋 Prescription parsing and calendar integration
+- 🔍 Web search integration for up-to-date medical information
 
-## Technology Stack
+## Screenshots
 
-*   **Backend:** Python, Flask
-*   **LLM:** Ollama (running Llama 3.2)
-*   **Web Search:** Firecrawl API
-*   **Translation:** Google Cloud Translate API (v2)
-*   **Calendar:** Google Calendar API (v3)
-*   **Authentication:** Google OAuth 2.0 (for Calendar), Custom password hashing
-*   **Data Storage:** Excel (`users.xlsx`) for user data
-*   **Frontend:** HTML, CSS, JavaScript (templates rendered by Flask)
+### Chat Interface
+![Chat Page](./images/chat_page.jpg)
+*Interactive chat interface showing how to communicate with Medo - ask questions via text or voice input, get AI responses with audio playback, and upload prescriptions for calendar integration*
 
-## Setup and Installation
+### Language Support
+![Language Support](./images/language_supports.jpg)
+*Multi-language support - Choose from English, Hindi, Spanish, French, Telugu, and Korean for both voice input and text responses*
 
-### Prerequisites
+## Demo
 
-1.  **Python:** Ensure Python 3.x is installed.
-2.  **Ollama:** Install and run Ollama locally. Make sure the model specified in `app.py` (e.g., `llama3.2:latest`) is pulled (`ollama pull llama3.2:latest`).
-3.  **Google Cloud Account:**
-    *   Enable Google Translate API and Google Calendar API.
-    *   Create a **Service Account** for the Translate API and download its key as `translate.json`.
-    *   Create an **OAuth 2.0 Client ID** for the Calendar API and download it as `tempCredentials.json`.
-4.  **Firecrawl API Key:** Obtain an API key from [Firecrawl](https://firecrawl.dev/).
+<!-- For GIFs or videos -->
+![Medo Demo](./images/demo.gif)
+*Live demo of voice interaction*
 
-### Installation Steps
+## Installation
 
-1.  **Clone/Download the Repository**
+1. Clone the repository:
+```bash
+git clone https://github.com/YOUR_USERNAME/medo-medical-assistant.git
+cd medo-medical-assistant
+```
 
-2.  **Install Required Python Packages:**
-    ```bash
-    pip install flask ollama pandas openpyxl requests python-dotenv google-cloud-translate google-api-python-client google-auth-httplib2 google-auth-oauthlib werkzeug torch
-    ```
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-3.  **Configure the Environment:**
-    *   Place your Google Translate service account key as `translate.json` in the project root.
-    *   Place your Google Calendar OAuth credentials as `tempCredentials.json` in the project root.
-    *   Create a `.env` file in the project root and add your Firecrawl API key.
+3. Set up Google Cloud credentials (see Configuration section)
 
-4.  **Set Up User Data:**
-    *   Create an Excel file named `users.xlsx` with columns for `email`, `username`, `password_hash`, and `language`.
+4. Run the application:
+```bash
+python app.py
+```
 
-5.  **Authorize Google Calendar:**
-    *   Run `python create_event.py` once to authorize access to your Google Calendar.
-    *   Follow the browser prompts to authenticate and grant permissions.
+## Configuration
 
-6.  **Run the Application:**
-    ```bash
-    python app.py
-    ```
-    The application will be available at `http://127.0.0.1:5000`
+Create the following credential files:
+- `speech-credentials.json` - Google Cloud Speech API credentials
+- `translate.json` - Google Cloud Translate API credentials
+- `token.json` - Google Calendar API token
+- `.env` - Environment variables
 
-## Usage
+## Tech Stack
 
-### User Registration and Login
+- **Backend**: Flask, Python
+- **AI/ML**: Ollama (Llama 3.2), Google Cloud APIs
+- **Frontend**: HTML, CSS, JavaScript
+- **Database**: Excel (users.xlsx)
 
-1. Access the login page at the root URL (`/`).
-2. Click on the registration link to create a new account.
-3. Provide email, username, and a secure password (at least 8 characters, including an uppercase letter and a digit).
-4. Log in with your credentials.
+## Contributing
 
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
 ### Chat Interface
 
 1. After login, you'll be directed to the chat interface.
@@ -129,5 +127,7 @@ Calendar events include:
 
 * Replace Excel-based user storage with a proper database.
 * Add advanced error handling and retry mechanisms.
+* Implement more sophisticated user interfaces.
+* Add support for additional languages and medical terminology.
 * Implement more sophisticated user interfaces.
 * Add support for additional languages and medical terminology.
