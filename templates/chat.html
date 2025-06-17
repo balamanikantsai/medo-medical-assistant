@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medo - Medical Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4285F4;
+            --secondary-color: #34A853;
+            --accent-color: #FBBC05;
+            --error-color: #EA4335;
+            --light-bg: #f8f9fa;
+            --dark-bg: #202124;
+            --medo-message-bg: #E8F0FE;
+            --user-message-bg: #D2E3FC;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+            color: #202124;
+            height: 100vh;
+        }
+        
+        .chat-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #5991f5);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1::before {
+            content: '🩺';
+            margin-right: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-controls span {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .user-controls a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .user-controls a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        #chatbox {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f5f7f9;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            background-color: var(--user-message-bg);
+            border-bottom-right-radius: 5px;
+            color: #202124;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .message.medo {
+            align-self: flex-start;
+            background-color: var(--medo-message-bg);
+            border-bottom-left-radius: 5px;
+            color: #202124;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            position: relative; /* Needed for absolute positioning of play button */
+        }
+        
+        .message::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 10px;
+            height: 10px;
+        }
+        
+        .play-audio-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem; /* Adjust size as needed */
+            padding: 5px;
+            margin-left: 10px;
+            vertical-align: middle;
+            color: var(--primary-color);
+            transition: color 0.2s;
+        }
+
+        .play-audio-button:hover {
+            color: var(--secondary-color);
+        }
+
+        .play-audio-button.playing {
+            color: var(--accent-color); /* Indicate playing state */
+        }
+
+        .sources {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 8px;
+        }
+        
+        .sources ul {
+            margin-top: 5px;
+            padding-left: 20px;
+        }
+        
+        .sources li {
+            margin-bottom: 4px;
+        }
+        
+        .sources a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .sources a:hover {
+            text-decoration: underline;
+        }
+        
+        .inference-time {
+            font-size: 0.75rem;
+            color: #70757a;
+            margin-top: 6px;
+            text-align: right;
+        }
+        
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            gap: 10px;
+        }
+        
+        #userInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #dadce0;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+        
+        #userInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        #sendButton {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+        }
+        
+        #sendButton:hover {
+            background-color: #3b78e7;
+        }
+        
+        #sendButton:active {
+            transform: scale(0.98);
+        }
+
+        #recordButton {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+        }
+
+        #recordButton.recording {
+            background-color: #dc3545;
+        }
+
+        #recordButton:disabled {
+            background-color: #adb5bd;
+            cursor: not-allowed;
+        }
+        
+        /* Prescription Area Styling */
+        .prescription-area {
+            padding: 20px;
+            background-color: white;
+            border-top: 1px solid #dadce0;
+            color: #202124;
+        }
+        
+        .prescription-area h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .prescription-area h3::before {
+            content: '📋';
+            margin-right: 8px;
+        }
+        
+        .prescription-area p {
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #5f6368;
+        }
+        
+        #prescriptionForm {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dadce0;
+        }
+        
+        #prescriptionFile {
+            flex: 1;
+            padding: 8px;
+        }
+        
+        #uploadButton {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        
+        #uploadButton:hover {
+            background-color: #2d9249;
+        }
+        
+        .status-message {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .status-message.success {
+            background-color: #e6f4ea;
+            color: #137333;
+            border: 1px solid #d2e3dc;
+        }
+        
+        .status-message.error {
+            background-color: #fce8e6;
+            color: #c5221f;
+            border: 1px solid #f5dad6;
+        }
+        
+        .status-message.info {
+            background-color: #e8f0fe;
+            color: #1967d2;
+            border: 1px solid #d2e3fc;
+        }
+        
+        #parsedDataPreview {
+            margin-top: 15px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dadce0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #202124;
+        }
+        
+        #loadingIndicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background-color: #fce8e6;
+            color: #c5221f;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .debug-info {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-top: 1px dashed #dadce0;
+            padding-top: 8px;
+        }
+        
+        .debug-info summary {
+            color: #5f6368;
+            cursor: pointer;
+        }
+        
+        .debug-info p {
+            margin: 5px 0;
+            color: #5f6368;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .message {
+                max-width: 90%;
+            }
+            
+            .user-controls span {
+                display: none; /* Hide welcome text on small screens */
+            }
+            
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .prescription-area h3 {
+                font-size: 1rem;
+            }
+            
+            #prescriptionForm {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            #prescriptionFile {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h1>Medo</h1>
+            <div class="user-controls">
+                <span>Welcome, {{ session['user'] }}!</span>
+                <a href="{{ url_for('settings') }}">Settings</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+
+        <div id="chatbox">
+            <div class="message medo">Hello! I'm Medo, your medical assistant. How can I help you today? Remember to consult a healthcare professional for serious medical advice.</div>
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Ask a medical question..." autocomplete="off">
+            <button id="recordButton" title="Record Voice Input">🎤</button>
+            <button id="sendButton">Send</button>
+        </div>
+        <!-- Add status display for voice input -->
+        <div id="transcription-status" style="text-align: center; padding: 5px; font-size: 0.85rem; color: #5f6368;"></div>
+
+        <!-- New Prescription Upload Section -->
+        <div class="prescription-area">
+            <hr style="border-color: rgba(255,255,255,0.3);">
+            <h3>Upload Prescription & Add Reminders</h3>
+            <p>Upload a <strong>.txt file</strong> containing your prescription details. Medo will parse it and add medication reminders to your Google Calendar for the next day.</p>
+            <form id="prescriptionForm" enctype="multipart/form-data">
+                <input type="file" id="prescriptionFile" name="prescriptionFile" accept=".txt" required>
+                <button type="submit" id="uploadButton">Upload & Add Reminders</button>
+            </form>
+            <div id="uploadStatus" class="status-message" style="display: none;"></div>
+            <pre id="parsedDataPreview"></pre>
+        </div>
+        <!-- End Prescription Upload Section -->
+
+        <div id="loadingIndicator" style="display: none;">Processing... <span class="spinner"></span></div>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        const chatbox = document.getElementById('chatbox');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const recordButton = document.getElementById('recordButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const transcriptionStatus = document.getElementById('transcription-status'); // Correctly reference the new element
+        // --- New Prescription Elements ---
+        const prescriptionForm = document.getElementById('prescriptionForm');
+        const prescriptionFile = document.getElementById('prescriptionFile');
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const parsedDataPreview = document.getElementById('parsedDataPreview');
+        // --- End New Prescription Elements ---
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let currentAudio = null; // Keep track of the currently playing audio
+        let currentPlayButton = null; // Keep track of the button associated with the playing audio
+
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0; // Reset playback
+            }
+            if (currentPlayButton) {
+                currentPlayButton.classList.remove('playing');
+                currentPlayButton.textContent = '🔊'; // Reset icon/text
+            }
+            currentAudio = null;
+            currentPlayButton = null;
+        }
+
+        function addMessage(sender, text, sources = [], inferenceTime = null, debugPrompt = null, debugAnswer = null, audioContentBase64 = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+
+            let messageHTML = text.replace(/\n/g, '<br>');
+
+            if (sender === 'medo' && audioContentBase64) {
+                const playButton = document.createElement('button');
+                playButton.classList.add('play-audio-button');
+                playButton.textContent = '🔊';
+                playButton.title = 'Play/Stop audio response'; // Updated title
+                playButton.onclick = (event) => {
+                    event.stopPropagation();
+
+                    // --- Toggle Logic ---
+                    if (playButton.classList.contains('playing')) {
+                        // If this button's audio is playing, stop it
+                        stopCurrentAudio();
+                        return; // Exit the handler
+                    }
+                    // --- End Toggle Logic ---
+
+                    // If other audio is playing, stop it first
+                    stopCurrentAudio();
+
+                    const audioSource = `data:audio/mp3;base64,${audioContentBase64}`;
+                    const audio = new Audio(audioSource);
+                    currentAudio = audio; // Track this audio instance
+                    currentPlayButton = playButton; // Track this button
+
+                    playButton.classList.add('playing');
+                    playButton.textContent = '⏹️'; // Change icon to indicate playing/stop
+
+                    audio.play().catch(e => {
+                        console.error("Error playing audio:", e);
+                        alert("Could not play audio. Check browser permissions or console for errors.");
+                        stopCurrentAudio(); // Reset state on error
+                    });
+
+                    audio.onended = () => {
+                        // Audio finished naturally, reset state
+                        stopCurrentAudio();
+                    };
+                    audio.onerror = () => {
+                        console.error("Audio playback error occurred.");
+                        alert("An error occurred during audio playback.");
+                        stopCurrentAudio(); // Reset state on error
+                    };
+                };
+                const textNode = document.createElement('span');
+                textNode.innerHTML = messageHTML;
+                messageDiv.appendChild(textNode);
+                messageDiv.appendChild(playButton);
+                messageHTML = '';
+            }
+
+            // ... rest of the addMessage function (setting innerHTML if needed, appending debug, sources, time) ...
+            if (messageHTML) {
+                messageDiv.innerHTML = messageHTML;
+            }
+
+            if (sender === 'medo' && (debugPrompt || debugAnswer)) {
+                const debugDetails = document.createElement('details');
+                debugDetails.className = 'debug-info';
+                let debugHTML = `<summary>Debug Info</summary>`;
+                if (debugPrompt) debugHTML += `<p><strong>Processed Prompt (EN):</strong> ${debugPrompt}</p>`;
+                if (debugAnswer) debugHTML += `<p><strong>Raw Answer (EN):</strong> ${debugAnswer}</p>`;
+                debugDetails.innerHTML = debugHTML;
+                messageDiv.appendChild(debugDetails); // Append debug info
+            }
+
+            if (sources && sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'sources';
+                let sourcesHTML = '<strong>Sources:</strong><ul>';
+                sources.forEach(source => {
+                    try {
+                        const url = new URL(source.url || source);
+                        sourcesHTML += `<li><a href="${url.href}" target="_blank" rel="noopener noreferrer">${source.text || url.hostname}</a></li>`;
+                    } catch (_) {
+                        sourcesHTML += `<li>${source.text || source}</li>`;
+                    }
+                });
+                sourcesHTML += '</ul>';
+                sourcesDiv.innerHTML = sourcesHTML;
+                messageDiv.appendChild(sourcesDiv); // Append sources
+            }
+
+            if (inferenceTime !== null) {
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'inference-time';
+                timeDiv.textContent = `Response time: ${inferenceTime}s`;
+                messageDiv.appendChild(timeDiv); // Append inference time
+            }
+
+            chatbox.appendChild(messageDiv);
+            chatbox.scrollTop = chatbox.scrollHeight; // Scroll to bottom
+        }
+
+        async function sendMessage() {
+            const prompt = userInput.value.trim();
+            if (!prompt) return;
+
+            addMessage('user', prompt);
+            userInput.value = '';
+            errorMessage.textContent = '';
+            errorMessage.style.display = 'none'; // Hide error message
+            loadingIndicator.style.display = 'flex'; // Show loading indicator (use flex if it contains spinner)
+            sendButton.disabled = true; // Disable button during processing
+            recordButton.disabled = true; // Disable record button too
+
+            try {
+                const response = await fetch('/get_response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: prompt }),
+                });
+
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                sendButton.disabled = false; // Re-enable button
+                recordButton.disabled = false; // Re-enable record button
+
+                if (!response.ok) {
+                    let errorMsg = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) { /* Ignore if response is not JSON */ }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+                addMessage('medo', data.response, data.sources, data.inference_time, data.debug_en_prompt, data.debug_en_answer, data.audio_content);
+
+            } catch (error) {
+                console.error('Error fetching response:', error);
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block'; // Show error message
+                loadingIndicator.style.display = 'none'; // Hide loading indicator on error
+                sendButton.disabled = false; // Re-enable button on error
+                recordButton.disabled = false; // Re-enable record button on error
+                addMessage('medo', `Sorry, I encountered an error processing your request: ${error.message}`);
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // --- New Prescription Upload Logic ---
+        prescriptionForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            const file = prescriptionFile.files[0];
+            if (!file) {
+                uploadStatus.textContent = 'Please select a file.';
+                uploadStatus.className = 'status-message error';
+                uploadStatus.style.display = 'block';
+                return;
+            }
+            if (!file.name.toLowerCase().endsWith('.txt')) {
+                uploadStatus.textContent = 'Invalid file type. Please upload a .txt file.';
+                uploadStatus.className = 'status-message error';
+                uploadStatus.style.display = 'block';
+                return;
+            }
+
+            uploadStatus.textContent = 'Uploading and processing...';
+            uploadStatus.className = 'status-message info';
+            uploadStatus.style.display = 'block';
+            uploadButton.disabled = true;
+            parsedDataPreview.style.display = 'none'; // Hide previous preview
+            parsedDataPreview.textContent = ''; // Clear previous preview content
+
+            const formData = new FormData();
+            formData.append('prescriptionFile', file);
+
+            try {
+                const response = await fetch('/upload_prescription', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+
+                uploadStatus.textContent = data.message || 'Processing complete.';
+                uploadStatus.className = 'status-message success';
+                if (data.parsed_data) {
+                    parsedDataPreview.textContent = JSON.stringify(data.parsed_data, null, 2);
+                    parsedDataPreview.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error uploading prescription:', error);
+                uploadStatus.textContent = `Error: ${error.message}`;
+                uploadStatus.className = 'status-message error';
+            } finally {
+                uploadButton.disabled = false;
+                prescriptionFile.value = ''; // Clear the file input after processing
+            }
+        });
+        // --- End New Prescription Upload Logic ---
+
+        // --- Speech Recognition Logic ---
+        async function startRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                transcriptionStatus.textContent = 'getUserMedia not supported on your browser!';
+                recordButton.disabled = true;
+                return;
+            }
+            sendButton.disabled = true;
+            userInput.disabled = true;
+            recordButton.disabled = true; // Disable temporarily until stream is ready
+            transcriptionStatus.textContent = 'Initializing microphone...';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const options = { mimeType: 'audio/webm;codecs=opus' };
+                try {
+                    mediaRecorder = new MediaRecorder(stream, options);
+                } catch (e) {
+                    console.warn(`MIME type ${options.mimeType} not supported, trying default.`);
+                    mediaRecorder = new MediaRecorder(stream);
+                }
+
+                audioChunks = [];
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    console.log("Recording stopped.");
+                    recordButton.classList.remove('recording');
+                    recordButton.textContent = '🎤';
+                    transcriptionStatus.textContent = 'Processing audio...';
+                    isRecording = false;
+                    recordButton.disabled = true; // Keep disabled during processing
+
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                    audioChunks = [];
+
+                    const formData = new FormData();
+                    formData.append('audio_blob', audioBlob, 'recording.webm');
+
+                    try {
+                        const response = await fetch('/transcribe_audio', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                        }
+
+                        if (data.transcript) {
+                            userInput.value = data.transcript;
+                            transcriptionStatus.textContent = 'Transcription complete.';
+                        } else {
+                            transcriptionStatus.textContent = 'Could not transcribe audio. Try again.';
+                        }
+
+                    } catch (error) {
+                        console.error('Transcription error:', error);
+                        transcriptionStatus.textContent = `Transcription failed: ${error.message}`;
+                    } finally {
+                        recordButton.disabled = false; // Re-enable record button
+                        sendButton.disabled = false; // Re-enable send button
+                        userInput.disabled = false; // Re-enable input field
+                        setTimeout(() => {
+                            if (transcriptionStatus.textContent.startsWith('Transcription') || transcriptionStatus.textContent.startsWith('Could not')) {
+                                transcriptionStatus.textContent = '';
+                            }
+                        }, 3000);
+                    }
+                };
+                mediaRecorder.start();
+                console.log("Recording started...");
+                recordButton.classList.add('recording');
+                recordButton.textContent = '🛑 Stop'; // Clearer text
+                transcriptionStatus.textContent = 'Recording... Click Stop when done.';
+                isRecording = true;
+                recordButton.disabled = false; // Re-enable now that recording started
+
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                transcriptionStatus.textContent = `Mic access error: ${err.message}`;
+                recordButton.disabled = false; // Ensure re-enabled on error
+                sendButton.disabled = false;
+                userInput.disabled = false;
+                isRecording = false;
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+            }
+        }
+
+        recordButton.addEventListener('click', () => {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            recordButton.disabled = true;
+            transcriptionStatus.textContent = 'Voice input not supported on this browser.';
+        }
+    </script>
+</body>
+</html>

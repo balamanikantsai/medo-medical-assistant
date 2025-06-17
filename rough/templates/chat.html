@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: url('/static/background2.png') no-repeat center center fixed;
+            background-size: cover;
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1rem;
+        }
+        .chat-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+        }
+        .user-message {
+            background-color: #007BFF;
+            color: white;
+            text-align: right;
+            margin-left: auto;
+        }
+        .assistant-message {
+            background-color: #f1f1f1;
+            color: #333;
+            text-align: left;
+        }
+        .input-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h1>Medo</h1>
+            <div>
+                <button onclick="window.location.href='/settings'">Settings</button>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="chat-box" id="chatBox"></div>
+
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Ask a medical question..." onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userInput = document.getElementById("userInput").value;
+            if (!userInput) return;
+
+            let chatBox = document.getElementById("chatBox");
+            chatBox.innerHTML += `<div class="message user-message"><strong>You:</strong> ${userInput}</div>`;
+            
+            fetch('/get_response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatBox.innerHTML += `<div class="message assistant-message"><strong>Bot:</strong> ${data.response} <br><small>(Inference time: ${data.inference_time.toFixed(2)}s)</small></div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(err => console.error("Error:", err));
+
+            document.getElementById("userInput").value = "";
+        }
+
+        function logout() {
+            window.location.href = "/logout";
+        }
+    </script>
+</body>
+</html>

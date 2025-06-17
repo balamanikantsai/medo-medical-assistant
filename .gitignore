@@ -1,0 +1,37 @@
+# Environment variables
+.env
+
+# Google Cloud credentials
+speech-credentials.json
+tempCredentials.json
+token.json
+translate.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Binary files
+bin/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads folder (optional - uncomment if you don't want to track uploaded files)
+# uploads/
+
+# Excel files with user data (optional - uncomment if contains sensitive data)
+# users.xlsx

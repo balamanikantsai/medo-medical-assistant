@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Medo Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .settings-container {
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .settings-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .settings-section:last-child {
+            border-bottom: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .language-options {
+            column-count: 2;
+            column-gap: 20px;
+            margin-bottom: 20px;
+        }
+        .language-options div {
+            margin-bottom: 10px;
+            display: block;
+        }
+        .language-options input[type="radio"] {
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .language-options label {
+            font-weight: normal;
+            font-size: 1em;
+            display: inline;
+            vertical-align: middle;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            min-height: 150px;
+            resize: vertical;
+            font-size: 1em;
+        }
+        button {
+            display: block;
+            width: auto;
+            min-width: 150px;
+            margin: 20px auto 0 auto;
+            padding: 12px 25px;
+            background: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background: #4cae4c;
+        }
+        .flash {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .flash.success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .flash.error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+        .flash.info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+        .flash.warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+        .links { text-align: center; margin-top: 30px; }
+        .links a { margin: 0 10px; color: #007bff; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <h1>Settings</h1>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Language Settings -->
+        <div class="settings-section">
+            <h2>Language Preference</h2>
+            <form action="{{ url_for('update_language') }}" method="post">
+                <div class="form-group">
+                    <label>Select your preferred output language:</label>
+                    <div class="language-options">
+                        {% for code, name in languages.items() %}
+                        <div>
+                            <input type="radio" id="{{ code }}" name="language" value="{{ code }}" {% if code == current_lang %}checked{% endif %} required>
+                            <label for="{{ code }}">{{ name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="submit">Update Language</button>
+            </form>
+        </div>
+
+        <!-- Prescription Management -->
+        <div class="settings-section">
+            <h2>Prescription Tools</h2>
+            <p>Paste your prescription text below. If parsed successfully, medication reminders will be automatically added to the shared Google Calendar.</p>
+            <form action="{{ url_for('upload_prescription') }}" method="post">
+                <div class="form-group">
+                    <label for="prescription_text">Prescription Text:</label>
+                    <textarea name="prescription_text" id="prescription_text" placeholder="Paste the text from your prescription here..." required></textarea>
+                </div>
+                <button type="submit">Parse and Add to Calendar</button>
+            </form>
+        </div>
+
+        <!-- Google Calendar Integration Status -->
+        <div class="settings-section">
+            <h3>Google Calendar Integration Status</h3>
+            <button id="checkCalendarBtn" class="btn">Check Calendar Service</button>
+            <div id="calendarStatus" style="margin-top: 15px; padding: 10px; border-radius: 5px; display: none;"></div>
+        </div>
+
+        <div class="links">
+            <a href="{{ url_for('chat') }}">Back to Chat</a> |
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('checkCalendarBtn').addEventListener('click', async function() {
+        const statusDiv = document.getElementById('calendarStatus');
+        statusDiv.style.display = 'block';
+        statusDiv.style.backgroundColor = '#f8f9fa';
+        statusDiv.innerHTML = 'Checking calendar service...';
+        
+        try {
+            const response = await fetch('/check_calendar_service');
+            const data = await response.json();
+            
+            if (response.ok) {
+                let statusHTML = `
+                    <h4>Calendar Service Status</h4>
+                    <ul>
+                        <li>Credentials file: ${data.credentials_file.status}</li>
+                        <li>Calendar service: ${data.calendar_service.status}</li>
+                    </ul>`;
+                    
+                if (data.calendar_service.status === 'Working') {
+                    statusDiv.style.backgroundColor = '#d4edda';
+                    statusHTML += `<p>✅ Google Calendar integration is working correctly!</p>`;
+                } else {
+                    statusDiv.style.backgroundColor = '#f8d7da';
+                    statusHTML += `
+                        <p>⚠️ Google Calendar integration is not working.</p>
+                        <p><strong>To fix:</strong> ${data.help}</p>
+                        <p>The credentials.json file should be placed in: ${data.credentials_file.path}</p>
+                    `;
+                }
+                
+                statusDiv.innerHTML = statusHTML;
+            } else {
+                statusDiv.style.backgroundColor = '#f8d7da';
+                statusDiv.innerHTML = `<p>Error checking calendar service: ${data.error || 'Unknown error'}</p>`;
+            }
+        } catch (error) {
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+        }
+    });
+    </script>
+</body>
+</html>
