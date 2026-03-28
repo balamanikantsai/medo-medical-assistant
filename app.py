@@ -18,9 +18,15 @@ import base64
 
 # Flask App Initialization
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
-FIRECRAWL_API_KEY = "fc-0126c9f027574e3897a696c7517ca00b"
 load_dotenv()
+_secret_key = os.getenv('SECRET_KEY', '')
+if not _secret_key:
+    print("⚠️ WARNING: SECRET_KEY not set in environment. Using an insecure default. Set SECRET_KEY in your .env file for production.")
+    _secret_key = 'your_secret_key_here'
+app.secret_key = _secret_key
+FIRECRAWL_API_KEY = os.getenv('FIRECRAWL_API_KEY', '')
+if not FIRECRAWL_API_KEY:
+    print("⚠️ WARNING: FIRECRAWL_API_KEY not set. Web search functionality will be unavailable.")
 
 # Initialize Google Translate client
 try:
@@ -194,7 +200,7 @@ def parse_prescription_with_llm(prescription_text):
         return None
 
 def firecrawl_search(query, num_of_searches=10):
-    """Searches the web using Firecrawl API and returns results with sources."""
+    """Searches the web using Firecrawl API and returns (context_string, sources_list)."""
     url = "https://api.firecrawl.dev/v1/search"
     payload = {
         "limit": num_of_searches,
@@ -226,11 +232,13 @@ def firecrawl_search(query, num_of_searches=10):
                     "text": result['llm_extraction']['summary'],
                     "url": result['llm_extraction']['source']
                 })
-        return sources[:4]
+        sources = sources[:4]
+        search_context = "\n\n".join([s['text'] for s in sources if s.get('text')])
+        return search_context, sources
         
     except Exception as e:
         print(f"Search error: {str(e)}")
-        return []
+        return "", []
     
 
     

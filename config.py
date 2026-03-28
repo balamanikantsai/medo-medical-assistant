@@ -1,4 +1,8 @@
 import openpyxl
+import os
+
+# Path to the SQLite database file used by models/database.py
+DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'medo.db')
 
 def add_language_column(file_path):
     """Adds a 'language' column with default value 'English' to the users.xlsx file."""
