@@ -1,0 +1,14 @@
+# Medo Backend Dependencies
+flask>=3.0
+flask-cors>=4.0
+python-dotenv>=1.0
+requests>=2.31
+pandas>=2.1
+openpyxl>=3.1
+werkzeug>=3.0
+google-cloud-translate>=3.12
+google-cloud-speech>=2.21
+google-cloud-texttospeech>=2.16
+google-auth>=2.23
+google-auth-oauthlib>=1.1
+google-api-python-client>=2.108
