@@ -16,6 +16,16 @@ from werkzeug.utils import secure_filename
 from create_event import create_calendar_event
 import base64
 
+# Optional OCR support for image prescriptions
+try:
+    from PIL import Image
+    import pytesseract
+    OCR_AVAILABLE = True
+    print("✅ OCR (Pillow + pytesseract) available for image prescriptions.")
+except ImportError:
+    OCR_AVAILABLE = False
+    print("⚠️ OCR not available. Install Pillow and pytesseract to support image prescription uploads.")
+
 # Flask App Initialization
 app = Flask(__name__)
 load_dotenv()
@@ -64,7 +74,8 @@ except Exception as e:
     tts_client = None
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'txt'}
+ALLOWED_EXTENSIONS = {'txt', 'png', 'jpg', 'jpeg'}
+IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -101,9 +112,29 @@ def translate_text(texts, src_lang="en", tgt_lang="hi"):
         print(f"Translation error: {str(e)}")
         return texts
 
+def _file_ext(filename):
+    """Returns the lowercased extension of *filename* (without the dot), or ''."""
+    return filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return _file_ext(filename) in ALLOWED_EXTENSIONS
+
+def is_image_file(filename):
+    """Returns True if the filename has an image extension."""
+    return _file_ext(filename) in IMAGE_EXTENSIONS
+
+def extract_text_from_image(filepath):
+    """Uses Tesseract OCR to extract text from a prescription image."""
+    if not OCR_AVAILABLE:
+        return None, "OCR is not available. Install Pillow and pytesseract to enable image prescription uploads."
+    try:
+        image = Image.open(filepath)
+        text = pytesseract.image_to_string(image)
+        print(f"✅ OCR extracted {len(text)} characters from image.")
+        return text.strip(), None
+    except Exception as e:
+        print(f"⚠️ OCR error: {e}")
+        return None, f"Failed to extract text from image: {str(e)}"
 
 def synthesize_speech(text, language_code="en-US", voice_gender="NEUTRAL"):
     """Synthesizes speech from the input string of text."""
@@ -352,32 +383,35 @@ def upload_prescription():
             file.save(filepath)
             print(f"File saved to {filepath}")
 
-            try:
-                with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-                    prescription_text = f.read()
-            except Exception as read_err:
-                 print(f"Error reading file {filepath}: {read_err}")
-                 if os.path.exists(filepath): os.remove(filepath)
-                 return jsonify({'error': f'Could not read file content: {read_err}'}), 500
+            # Extract prescription text — plain text file or image via OCR
+            prescription_text = None
+            error_response = None
+            if is_image_file(filename):
+                prescription_text, ocr_error = extract_text_from_image(filepath)
+                if ocr_error:
+                    error_response = jsonify({'error': ocr_error}), 500
+                elif not prescription_text:
+                    error_response = jsonify({'error': 'No text could be extracted from the image. Ensure the prescription image is clear and legible.'}), 400
+            else:
+                try:
+                    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                        prescription_text = f.read()
+                except Exception as read_err:
+                    print(f"Error reading file {filepath}: {read_err}")
+                    error_response = jsonify({'error': f'Could not read file content: {read_err}'}), 500
+                if prescription_text is not None and not prescription_text.strip():
+                    print(f"Warning: File {filepath} is empty.")
+                    error_response = jsonify({'error': 'File content is empty.'}), 400
 
-            if not prescription_text.strip():
-                 print(f"Warning: File {filepath} is empty.")
-                 if os.path.exists(filepath): os.remove(filepath)
-                 return jsonify({'error': 'File content is empty.'}), 400
+            if error_response is not None:
+                return error_response
 
             parsed_data = parse_prescription_with_llm(prescription_text)
 
             if not parsed_data:
-                if os.path.exists(filepath): os.remove(filepath)
                 return jsonify({'error': 'Failed to parse prescription using LLM. Check logs.'}), 500
 
             success, message = create_calendar_event(parsed_data)
-
-            try:
-                os.remove(filepath)
-                print(f"Removed uploaded file: {filepath}")
-            except OSError as e:
-                print(f"Warning: Error removing file {filepath}: {e.strerror}")
 
             if success:
                 return jsonify({'message': message, 'parsed_data': parsed_data}), 200
@@ -386,12 +420,16 @@ def upload_prescription():
 
         except Exception as e:
             print(f"Error processing upload: {e}")
-            if 'filepath' in locals() and os.path.exists(filepath):
-                 try: os.remove(filepath)
-                 except OSError as e_rem: print(f"Error removing file {filepath} after error: {e_rem.strerror}")
             return jsonify({'error': f'An unexpected error occurred: {str(e)}'}), 500
+        finally:
+            if 'filepath' in locals() and os.path.exists(filepath):
+                try:
+                    os.remove(filepath)
+                    print(f"Removed uploaded file: {filepath}")
+                except OSError as e_rem:
+                    print(f"Warning: Error removing file {filepath}: {e_rem.strerror}")
     else:
-        return jsonify({'error': 'File type not allowed. Please upload a .txt file.'}), 400
+        return jsonify({'error': 'File type not allowed. Please upload a .txt, .png, .jpg, or .jpeg file.'}), 400
 
 @app.route('/get_response', methods=['POST'])
 def get_response():

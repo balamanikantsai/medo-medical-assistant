@@ -471,9 +471,9 @@
         <div class="prescription-area">
             <hr style="border-color: rgba(255,255,255,0.3);">
             <h3>Upload Prescription & Add Reminders</h3>
-            <p>Upload a <strong>.txt file</strong> containing your prescription details. Medo will parse it and add medication reminders to your Google Calendar for the next day.</p>
+            <p>Upload a <strong>.txt file</strong> or a <strong>prescription image (.png, .jpg, .jpeg)</strong>. Medo will parse it and add medication reminders to your Google Calendar for the next day.</p>
             <form id="prescriptionForm" enctype="multipart/form-data">
-                <input type="file" id="prescriptionFile" name="prescriptionFile" accept=".txt" required>
+                <input type="file" id="prescriptionFile" name="prescriptionFile" accept=".txt,.png,.jpg,.jpeg" required>
                 <button type="submit" id="uploadButton">Upload & Add Reminders</button>
             </form>
             <div id="uploadStatus" class="status-message" style="display: none;"></div>
@@ -685,8 +685,10 @@
                 uploadStatus.style.display = 'block';
                 return;
             }
-            if (!file.name.toLowerCase().endsWith('.txt')) {
-                uploadStatus.textContent = 'Invalid file type. Please upload a .txt file.';
+            const allowedExtensions = ['.txt', '.png', '.jpg', '.jpeg'];
+            const fileExt = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            if (!allowedExtensions.includes(fileExt)) {
+                uploadStatus.textContent = 'Invalid file type. Please upload a .txt, .png, .jpg, or .jpeg file.';
                 uploadStatus.className = 'status-message error';
                 uploadStatus.style.display = 'block';
                 return;
